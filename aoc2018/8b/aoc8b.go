@@ -28,10 +28,25 @@ func main() {
 
 	tree := createTree(intSlice)
 
-	metaSum := sumMetadata(tree)
+	rootVal := sumNode(tree)
 
-	fmt.Println("Metadata Sum: ", metaSum)
+	fmt.Println("Root node value: ", rootVal)
+}
 
+func sumNode(node Node) int {
+	sum := 0
+
+	if len(node.childNodes) == 0 {
+		sum = sumInts(node.metadata)
+	} else {
+		for _, v := range node.metadata {
+			if v-1 < len(node.childNodes) && v > 0 {
+				sum = sum + sumNode(node.childNodes[v-1])
+			}
+		}
+	}
+
+	return sum
 }
 
 func createTree(nums []int) Node {
@@ -64,18 +79,6 @@ func getLength(Node Node) int {
 	}
 	length = length + len(Node.metadata)
 	return length
-}
-
-func sumMetadata(tree Node) int {
-
-	sum := 0
-
-	for _, Nodes := range tree.childNodes {
-		sum += sumMetadata(Nodes)
-	}
-
-	return sumInts(tree.metadata) + sum
-
 }
 
 func sumInts(nums []int) int {
