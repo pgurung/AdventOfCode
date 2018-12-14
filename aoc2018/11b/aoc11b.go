@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"time"
 )
 
 const (
 	maxX   = 300
 	maxY   = 300
-	serial = 4151
+	serial = 4151 //Puzzle Input
 )
 
 type cell struct {
@@ -17,8 +18,20 @@ type cell struct {
 	power int
 	size  int
 }
+type point struct {
+	x int
+	y int
+	s int
+}
+
+type pointPow struct {
+	p int
+	s int
+}
 
 func main() {
+
+	start := time.Now()
 
 	powerGrid := createGrid()
 	var maxPower cell
@@ -32,6 +45,7 @@ func main() {
 	}
 
 	fmt.Println(maxPower)
+	fmt.Println("Total time:", time.Since(start))
 
 }
 
@@ -59,30 +73,48 @@ func calcPower(x int, y int) int {
 
 }
 
-func findGridPower(x int, y int, s int) int {
-	gridPower := 0
-	for i := 0; i < s; i++ {
-		for j := 0; j < s; j++ {
-			if x+i < 301 && y+j < 301 {
-				gridPower = gridPower + calcPower(x+i, y+j)
+func findGridPower(input <-chan point, output chan<- pointPow) {
+	for p := range input {
+		gridPower := 0
+		for i := 0; i < p.s; i++ {
+			for j := 0; j < p.s; j++ {
+				if p.x+i < 301 && p.y+j < 301 {
+					gridPower = gridPower + calcPower(p.x+i, p.y+j)
+				}
 			}
 		}
+		output <- pointPow{p: gridPower, s: p.s}
 	}
-
-	return gridPower
 }
 
 func maxGridPower(x int, y int) (int, int) {
 	power, size := 0, 0
+	// maxSize := findMax(300-x, 300-y) calculates all the possible values
+	//however for the given input of 4151, maxSize can be set to 15 and you'll still get the correct answer
+	//execution time of 1 hr vs 2-3 seconds!!
+	// without the use of channel this would take multiple hours and a few minutes respectively
+	maxSize := 15
 
-	// maxSize := findMax(300-x, 300-y)
+	input := make(chan point, maxSize)
+	output := make(chan pointPow, maxSize)
 
-	for i := 1; i < 50; i++ {
-		if findGridPower(x, y, i) > power {
-			power = findGridPower(x, y, i)
-			size = i
+	go findGridPower(input, output)
+	go findGridPower(input, output)
+	go findGridPower(input, output)
+	go findGridPower(input, output)
+
+	for i := 1; i < maxSize; i++ {
+		input <- point{x: x, y: y, s: i}
+
+	}
+	close(input)
+
+	for i := 0; i < maxSize-1; i++ {
+		ps := <-output
+		if ps.p > power {
+			power = ps.p
+			size = ps.s
 		}
-
 	}
 
 	return power, size
