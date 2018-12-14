@@ -7,8 +7,6 @@ import (
 )
 
 const (
-	maxX   = 300
-	maxY   = 300
 	serial = 4151 //Puzzle Input
 )
 
